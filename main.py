@@ -33,6 +33,11 @@ camera_marker_size = 24
 camera_angle = 0
 turn_speed = 0.08  # how much of the remaining turn we do each frame (0 to 1)
 
+# Remember old target positions so the camera looks a little late
+delay_frames = 18
+past_x = []
+past_y = []
+
 clock = pygame.time.Clock()
 
 running = True
@@ -52,9 +57,19 @@ while running:
     if circle_y - circle_radius <= 0 or circle_y + circle_radius >= HEIGHT:
         speed_y = -speed_y
 
-    # The direction we want to point (straight at the circle)
-    dx = circle_x - camera_x
-    dy = circle_y - camera_y
+    # Save this frame's target position, then look at an older one (small delay)
+    past_x.append(circle_x)
+    past_y.append(circle_y)
+    if len(past_x) > delay_frames:
+        delayed_x = past_x.pop(0)
+        delayed_y = past_y.pop(0)
+    else:
+        delayed_x = circle_x
+        delayed_y = circle_y
+
+    # The direction we want to point (at the delayed target position)
+    dx = delayed_x - camera_x
+    dy = delayed_y - camera_y
     target_angle = math.atan2(dy, dx)
 
     # How far we still need to turn
