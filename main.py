@@ -57,6 +57,10 @@ while running:
     if circle_y - circle_radius <= 0 or circle_y + circle_radius >= HEIGHT:
         speed_y = -speed_y
 
+    # Next position = current position + current speed
+    predicted_x = circle_x + speed_x
+    predicted_y = circle_y + speed_y
+
     # Save this frame's target position, then look at an older one (small delay)
     past_x.append(circle_x)
     past_y.append(circle_y)
@@ -117,8 +121,14 @@ while running:
         True,
         BLACK,
     )
+    predicted_text = font.render(
+        f"Predicted X: {predicted_x:.1f}   Predicted Y: {predicted_y:.1f}",
+        True,
+        BLACK,
+    )
     screen.blit(target_text, (10, 10))
     screen.blit(angle_text, (10, 40))
+    screen.blit(predicted_text, (10, 70))
 
     # Show this frame on the screen
     pygame.display.flip()
