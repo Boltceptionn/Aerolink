@@ -12,6 +12,7 @@ pygame.display.set_caption("My First Circle")
 # Colors are (red, green, blue) values from 0 to 255
 WHITE = (255, 255, 255)
 BLUE = (50, 120, 220)
+RED = (200, 50, 50)
 
 # Circle position, size, and how far it moves each frame
 circle_x = WIDTH // 2
@@ -19,6 +20,11 @@ circle_y = HEIGHT // 2
 circle_radius = 60
 speed_x = 3
 speed_y = 2
+
+# Camera marker: a fixed spot in the window (it does not move yet)
+camera_x = WIDTH // 2
+camera_y = HEIGHT // 2
+camera_marker_size = 16
 
 clock = pygame.time.Clock()
 
@@ -42,6 +48,22 @@ while running:
     # Fill the background, then draw the circle on top
     screen.fill(WHITE)
     pygame.draw.circle(screen, BLUE, (circle_x, circle_y), circle_radius)
+
+    # Draw the camera marker as a red plus sign (it stays in the same place)
+    pygame.draw.line(
+        screen,
+        RED,
+        (camera_x - camera_marker_size, camera_y),
+        (camera_x + camera_marker_size, camera_y),
+        3,
+    )
+    pygame.draw.line(
+        screen,
+        RED,
+        (camera_x, camera_y - camera_marker_size),
+        (camera_x, camera_y + camera_marker_size),
+        3,
+    )
 
     # Show this frame on the screen
     pygame.display.flip()
