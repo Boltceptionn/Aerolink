@@ -26,10 +26,12 @@ circle_radius = 60
 speed_x = 3
 speed_y = 2
 
-# Camera marker: stays in one place, but will rotate to face the circle
+# Camera marker: stays in one place, and turns smoothly toward the circle
 camera_x = WIDTH // 2
 camera_y = HEIGHT // 2
 camera_marker_size = 24
+camera_angle = 0
+turn_speed = 0.08  # how much of the remaining turn we do each frame (0 to 1)
 
 clock = pygame.time.Clock()
 
@@ -50,20 +52,32 @@ while running:
     if circle_y - circle_radius <= 0 or circle_y + circle_radius >= HEIGHT:
         speed_y = -speed_y
 
-    # Angle from the camera to the circle (atan2 gives the direction)
+    # The direction we want to point (straight at the circle)
     dx = circle_x - camera_x
     dy = circle_y - camera_y
-    angle = math.atan2(dy, dx)
+    target_angle = math.atan2(dy, dx)
 
-    # Tip of the arrow, in the direction of the circle
-    tip_x = camera_x + math.cos(angle) * camera_marker_size
-    tip_y = camera_y + math.sin(angle) * camera_marker_size
+    # How far we still need to turn
+    angle_diff = target_angle - camera_angle
+
+    # Keep the difference between -pi and pi so we turn the short way
+    while angle_diff > math.pi:
+        angle_diff = angle_diff - 2 * math.pi
+    while angle_diff < -math.pi:
+        angle_diff = angle_diff + 2 * math.pi
+
+    # Turn a fraction of the way each frame (smooth follow, not an instant snap)
+    camera_angle = camera_angle + angle_diff * turn_speed
+
+    # Tip of the arrow, using the camera's current pointing angle
+    tip_x = camera_x + math.cos(camera_angle) * camera_marker_size
+    tip_y = camera_y + math.sin(camera_angle) * camera_marker_size
 
     # Back corners of the arrow (a little left and right of the opposite direction)
-    left_x = camera_x + math.cos(angle + 2.5) * (camera_marker_size * 0.6)
-    left_y = camera_y + math.sin(angle + 2.5) * (camera_marker_size * 0.6)
-    right_x = camera_x + math.cos(angle - 2.5) * (camera_marker_size * 0.6)
-    right_y = camera_y + math.sin(angle - 2.5) * (camera_marker_size * 0.6)
+    left_x = camera_x + math.cos(camera_angle + 2.5) * (camera_marker_size * 0.6)
+    left_y = camera_y + math.sin(camera_angle + 2.5) * (camera_marker_size * 0.6)
+    right_x = camera_x + math.cos(camera_angle - 2.5) * (camera_marker_size * 0.6)
+    right_y = camera_y + math.sin(camera_angle - 2.5) * (camera_marker_size * 0.6)
 
     # Fill the background, then draw the circle on top
     screen.fill(WHITE)
@@ -77,7 +91,7 @@ while running:
     )
 
     # Show the target position and the camera's pointing angle
-    angle_degrees = math.degrees(angle)
+    angle_degrees = math.degrees(camera_angle)
     target_text = font.render(
         f"Target X: {circle_x:.1f}   Target Y: {circle_y:.1f}",
         True,
