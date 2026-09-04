@@ -46,6 +46,9 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_s:
+                pygame.image.save(screen, "frame.png")
 
     # Move the circle
     circle_x = circle_x + speed_x

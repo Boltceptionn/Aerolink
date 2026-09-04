@@ -1,0 +1,11 @@
+# YOLO dataset paths (from this project's folder)
+path: dataset
+train: images
+val: images
+
+# Labels are in dataset/labels
+# YOLO finds them by using the labels folder next to images
+
+# Class 0 is our blue target
+names:
+  0: fsoc_target
