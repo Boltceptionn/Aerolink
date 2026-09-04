@@ -14,6 +14,10 @@ pygame.display.set_caption("My First Circle")
 WHITE = (255, 255, 255)
 BLUE = (50, 120, 220)
 RED = (200, 50, 50)
+BLACK = (0, 0, 0)
+
+# Font for the numbers on the screen
+font = pygame.font.Font(None, 28)
 
 # Circle position, size, and how far it moves each frame
 circle_x = WIDTH // 2
@@ -71,6 +75,21 @@ while running:
         RED,
         [(tip_x, tip_y), (left_x, left_y), (right_x, right_y)],
     )
+
+    # Show the target position and the camera's pointing angle
+    angle_degrees = math.degrees(angle)
+    target_text = font.render(
+        f"Target X: {circle_x:.1f}   Target Y: {circle_y:.1f}",
+        True,
+        BLACK,
+    )
+    angle_text = font.render(
+        f"Camera angle: {angle_degrees:.1f} degrees",
+        True,
+        BLACK,
+    )
+    screen.blit(target_text, (10, 10))
+    screen.blit(angle_text, (10, 40))
 
     # Show this frame on the screen
     pygame.display.flip()
