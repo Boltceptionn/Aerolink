@@ -1,3 +1,4 @@
+import math
 import pygame
 
 # Start pygame (this sets up the window, drawing, and events)
@@ -21,10 +22,10 @@ circle_radius = 60
 speed_x = 3
 speed_y = 2
 
-# Camera marker: a fixed spot in the window (it does not move yet)
+# Camera marker: stays in one place, but will rotate to face the circle
 camera_x = WIDTH // 2
 camera_y = HEIGHT // 2
-camera_marker_size = 16
+camera_marker_size = 24
 
 clock = pygame.time.Clock()
 
@@ -45,24 +46,30 @@ while running:
     if circle_y - circle_radius <= 0 or circle_y + circle_radius >= HEIGHT:
         speed_y = -speed_y
 
+    # Angle from the camera to the circle (atan2 gives the direction)
+    dx = circle_x - camera_x
+    dy = circle_y - camera_y
+    angle = math.atan2(dy, dx)
+
+    # Tip of the arrow, in the direction of the circle
+    tip_x = camera_x + math.cos(angle) * camera_marker_size
+    tip_y = camera_y + math.sin(angle) * camera_marker_size
+
+    # Back corners of the arrow (a little left and right of the opposite direction)
+    left_x = camera_x + math.cos(angle + 2.5) * (camera_marker_size * 0.6)
+    left_y = camera_y + math.sin(angle + 2.5) * (camera_marker_size * 0.6)
+    right_x = camera_x + math.cos(angle - 2.5) * (camera_marker_size * 0.6)
+    right_y = camera_y + math.sin(angle - 2.5) * (camera_marker_size * 0.6)
+
     # Fill the background, then draw the circle on top
     screen.fill(WHITE)
     pygame.draw.circle(screen, BLUE, (circle_x, circle_y), circle_radius)
 
-    # Draw the camera marker as a red plus sign (it stays in the same place)
-    pygame.draw.line(
+    # Draw the camera marker as a red arrow (position stays fixed)
+    pygame.draw.polygon(
         screen,
         RED,
-        (camera_x - camera_marker_size, camera_y),
-        (camera_x + camera_marker_size, camera_y),
-        3,
-    )
-    pygame.draw.line(
-        screen,
-        RED,
-        (camera_x, camera_y - camera_marker_size),
-        (camera_x, camera_y + camera_marker_size),
-        3,
+        [(tip_x, tip_y), (left_x, left_y), (right_x, right_y)],
     )
 
     # Show this frame on the screen
