@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 
-# Small pretrained model (YOLO downloads this file the first time you run it)
-model = YOLO("yolov8n.pt")
+# Our trained AEROLINK model (not the default yolov8n.pt)
+model = YOLO("runs/detect/train-2/weights/best.pt")
 
 # Look at the screenshot saved from the Pygame window
 results = model("frame.png", save=False)

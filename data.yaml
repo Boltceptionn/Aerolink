@@ -1,7 +1,7 @@
 # YOLO dataset paths (from this project's folder)
 path: dataset
-train: images
-val: images
+train: images/train
+val: images/val
 
 # Labels are in dataset/labels
 # YOLO finds them by using the labels folder next to images
