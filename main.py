@@ -76,9 +76,10 @@ while running:
     if circle_y - circle_radius <= 0 or circle_y + circle_radius >= HEIGHT:
         speed_y = -speed_y
 
-    # Next position = current position + current speed
-    predicted_x = circle_x + speed_x
-    predicted_y = circle_y + speed_y
+    # Predict the target position after the tracking delay
+    prediction_horizon = delay_frames
+    predicted_x = circle_x + speed_x * prediction_horizon
+    predicted_y = circle_y + speed_y * prediction_horizon
 
     # Save this frame's target position, then look at an older one (small delay)
     past_x.append(circle_x)
@@ -117,9 +118,9 @@ while running:
             break
 
     if not yolo_mode:
-        # Existing mode: point at the delayed ground-truth circle position
-        dx = delayed_x - camera_x
-        dy = delayed_y - camera_y
+    # Existing mode: point at the predicted target position
+        dx = predicted_x - camera_x
+        dy = predicted_y - camera_y
         target_angle = math.atan2(dy, dx)
 
         angle_diff = target_angle - camera_angle
