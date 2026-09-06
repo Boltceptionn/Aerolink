@@ -1,4 +1,7 @@
 import streamlit as st
+import pygame
+from simulator import run_simulation
+
 
 st.set_page_config(
     page_title="AEROLINK",
@@ -8,11 +11,12 @@ st.set_page_config(
 
 st.title("AEROLINK")
 st.caption("Virtual FSOC Alignment & Tracking System")
-
 st.divider()
+
 
 # Left panel: controls
 left, center, right = st.columns([1, 2, 1])
+
 
 with left:
     st.subheader("Mission Controls")
@@ -41,14 +45,26 @@ with left:
         use_container_width=True
     )
 
+
 with center:
     st.subheader("Virtual Camera View")
 
+    frame = run_simulation(
+        target_speed=target_speed,
+        tracking_mode=tracking_mode
+    )
+
+    frame = frame.copy()
+    frame = pygame.surfarray.array3d(frame)
+    frame = frame.transpose(1, 0, 2)
+
     st.image(
-        "frame.png",
+        frame,
         caption="Virtual Camera Feed",
         use_container_width=True
     )
+
+
 with right:
     st.subheader("Telemetry")
 
@@ -61,17 +77,21 @@ with right:
     else:
         st.info("System ready")
 
+
 st.divider()
 
 st.subheader("Alignment Status")
 
 col1, col2, col3 = st.columns(3)
 
+
 with col1:
     st.metric("Horizontal Error", "0 px")
 
+
 with col2:
     st.metric("Vertical Error", "0 px")
+
 
 with col3:
     st.metric("System Status", "READY")
