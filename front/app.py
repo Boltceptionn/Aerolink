@@ -11,6 +11,7 @@ st.set_page_config(
 
 
 # ---------- Styling ----------
+
 st.markdown("""
 <style>
     .stApp {
@@ -98,12 +99,15 @@ st.markdown("""
 
 
 # ---------- Header ----------
+
 st.markdown("""
 <div class="topbar">
     <div class="brand">AEROLINK</div>
+
     <div class="subtitle">
         VIRTUAL FSOC ALIGNMENT & TRACKING SYSTEM
     </div>
+
     <div style="margin-top:8px;" class="status">
         ● SYSTEM ONLINE
     </div>
@@ -112,11 +116,14 @@ st.markdown("""
 
 
 # ---------- Main Layout ----------
+
 left, center, right = st.columns([1, 2.4, 1])
 
 
 # ---------- Mission Controls ----------
+
 with left:
+
     st.markdown(
         '<div class="panel-title">MISSION CONFIGURATION</div>',
         unsafe_allow_html=True
@@ -164,13 +171,15 @@ with left:
 
 
 # ---------- Camera View ----------
+
 with center:
+
     st.markdown(
         '<div class="panel-title">VIRTUAL CAMERA FEED</div>',
         unsafe_allow_html=True
     )
 
-    frame = run_simulation(
+    frame, error_x, error_y = run_simulation(
         target_speed=target_speed,
         tracking_mode=tracking_mode
     )
@@ -187,7 +196,9 @@ with center:
 
 
 # ---------- Telemetry ----------
+
 with right:
+
     st.markdown(
         '<div class="panel-title">LIVE TELEMETRY</div>',
         unsafe_allow_html=True
@@ -211,12 +222,12 @@ with right:
 
     <div class="telemetry-card">
         <div class="telemetry-label">HORIZONTAL ERROR</div>
-        <div class="telemetry-value">0 px</div>
+        <div class="telemetry-value">{abs(error_x):.1f} px</div>
     </div>
 
     <div class="telemetry-card">
         <div class="telemetry-label">VERTICAL ERROR</div>
-        <div class="telemetry-value">0 px</div>
+        <div class="telemetry-value">{abs(error_y):.1f} px</div>
     </div>
 
     <div class="telemetry-card">
@@ -229,6 +240,7 @@ with right:
 
 
 # ---------- Bottom Status ----------
+
 st.divider()
 
 st.markdown(

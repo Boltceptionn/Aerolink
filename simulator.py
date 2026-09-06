@@ -107,4 +107,7 @@ def run_simulation(target_speed=5, tracking_mode="Ground Truth"):
 
     pygame.quit()
 
-    return screen
+    error_x = target_x - camera_x
+    error_y = target_y - camera_y
+
+    return screen, error_x, error_y
