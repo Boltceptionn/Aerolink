@@ -41,7 +41,7 @@ past_x = []
 past_y = []
 
 # Load the trained detector once (not inside the loop)
-model = YOLO("runs/detect/train/weights/best.pt")
+model = YOLO('runs/detect/train-3/weights/best.pt')
 yolo_mode = False  # False = existing ground-truth tracking
 yolo_every_n_frames = 10
 yolo_gain = 0.0005  # small radians per pixel of horizontal error
