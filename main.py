@@ -1,5 +1,7 @@
 import math
+import numpy as np
 import pygame
+from ultralytics import YOLO
 
 # Start pygame (this sets up the window, drawing, and events)
 pygame.init()
@@ -38,6 +40,16 @@ delay_frames = 18
 past_x = []
 past_y = []
 
+# Load the trained detector once (not inside the loop)
+model = YOLO("runs/detect/train/weights/best.pt")
+yolo_mode = False  # False = existing ground-truth tracking
+yolo_every_n_frames = 10
+yolo_gain = 0.0005  # small radians per pixel of horizontal error
+frame_count = 0
+error_x = 0.0
+error_y = 0.0
+yolo_found = False
+
 clock = pygame.time.Clock()
 
 running = True
@@ -49,6 +61,10 @@ while running:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_s:
                 pygame.image.save(screen, "frame.png")
+            if event.key == pygame.K_m:
+                yolo_mode = not yolo_mode
+
+    frame_count = frame_count + 1
 
     # Move the circle
     circle_x = circle_x + speed_x
@@ -74,22 +90,49 @@ while running:
         delayed_x = circle_x
         delayed_y = circle_y
 
-    # The direction we want to point (at the delayed target position)
-    dx = delayed_x - camera_x
-    dy = delayed_y - camera_y
-    target_angle = math.atan2(dy, dx)
+    # Fill the background, then draw the circle (needed before YOLO sees the frame)
+    screen.fill(WHITE)
+    pygame.draw.circle(screen, BLUE, (circle_x, circle_y), circle_radius)
 
-    # How far we still need to turn
-    angle_diff = target_angle - camera_angle
+    # Run YOLO on the current window pixels, but only every N frames
+    if frame_count % yolo_every_n_frames == 0:
+        frame_rgb = np.transpose(pygame.surfarray.array3d(screen), (1, 0, 2)).copy()
+        results = model(frame_rgb, verbose=False)
+        result = results[0]
+        yolo_found = False
+        for box in result.boxes:
+            class_id = int(box.cls[0])
+            name = result.names[class_id]
+            if name != "fsoc_target":
+                continue
+            x1, y1, x2, y2 = box.xyxy[0].tolist()
+            center_x = (x1 + x2) / 2
+            center_y = (y1 + y2) / 2
+            image_height, image_width = result.orig_shape
+            camera_center_x = image_width / 2
+            camera_center_y = image_height / 2
+            error_x = center_x - camera_center_x
+            error_y = center_y - camera_center_y
+            yolo_found = True
+            break
 
-    # Keep the difference between -pi and pi so we turn the short way
-    while angle_diff > math.pi:
-        angle_diff = angle_diff - 2 * math.pi
-    while angle_diff < -math.pi:
-        angle_diff = angle_diff + 2 * math.pi
+    if not yolo_mode:
+        # Existing mode: point at the delayed ground-truth circle position
+        dx = delayed_x - camera_x
+        dy = delayed_y - camera_y
+        target_angle = math.atan2(dy, dx)
 
-    # Turn a fraction of the way each frame (smooth follow, not an instant snap)
-    camera_angle = camera_angle + angle_diff * turn_speed
+        angle_diff = target_angle - camera_angle
+        while angle_diff > math.pi:
+            angle_diff = angle_diff - 2 * math.pi
+        while angle_diff < -math.pi:
+            angle_diff = angle_diff + 2 * math.pi
+
+        camera_angle = camera_angle + angle_diff * turn_speed
+    else:
+        # YOLO mode: pan only, using horizontal pixel error
+        if yolo_found:
+            camera_angle = camera_angle + yolo_gain * error_x
 
     # Tip of the arrow, using the camera's current pointing angle
     tip_x = camera_x + math.cos(camera_angle) * camera_marker_size
@@ -100,10 +143,6 @@ while running:
     left_y = camera_y + math.sin(camera_angle + 2.5) * (camera_marker_size * 0.6)
     right_x = camera_x + math.cos(camera_angle - 2.5) * (camera_marker_size * 0.6)
     right_y = camera_y + math.sin(camera_angle - 2.5) * (camera_marker_size * 0.6)
-
-    # Fill the background, then draw the circle on top
-    screen.fill(WHITE)
-    pygame.draw.circle(screen, BLUE, (circle_x, circle_y), circle_radius)
 
     # Draw the camera marker as a red arrow (position stays fixed)
     pygame.draw.polygon(
@@ -129,9 +168,24 @@ while running:
         True,
         BLACK,
     )
+    if yolo_mode:
+        mode_label = "Control: YOLO (press M to switch)"
+    else:
+        mode_label = "Control: ground truth (press M to switch)"
+    mode_text = font.render(mode_label, True, BLACK)
+    if yolo_found:
+        error_text = font.render(
+            f"YOLO alignment error: ({error_x:.1f}, {error_y:.1f})",
+            True,
+            BLACK,
+        )
+    else:
+        error_text = font.render("YOLO alignment error: no fsoc_target", True, BLACK)
     screen.blit(target_text, (10, 10))
     screen.blit(angle_text, (10, 40))
     screen.blit(predicted_text, (10, 70))
+    screen.blit(mode_text, (10, 100))
+    screen.blit(error_text, (10, 130))
 
     # Show this frame on the screen
     pygame.display.flip()

@@ -21,25 +21,31 @@ os.makedirs(val_images, exist_ok=True)
 os.makedirs(train_labels, exist_ok=True)
 os.makedirs(val_labels, exist_ok=True)
 
+image_extensions = (".png", ".jpg", ".jpeg")
+
 # Find image files in dataset/images (skip the train and val folders)
 pairs = []
 for name in os.listdir(images_folder):
     image_path = os.path.join(images_folder, name)
     if not os.path.isfile(image_path):
         continue
-    if not name.endswith(".png"):
+    stem, ext = os.path.splitext(name)
+    if ext.lower() not in image_extensions:
         continue
 
     # Matching label uses the same name, but with .txt
-    label_name = name.replace(".png", ".txt")
+    label_name = stem + ".txt"
     label_path = os.path.join(labels_folder, label_name)
     if os.path.isfile(label_path):
         pairs.append((name, label_name))
+    else:
+        print("Skipping (no matching label):", name)
 
-# Mix the pairs, then take 40 for train and 10 for val
+# Mix the pairs, then take 80% for train and the rest for val
 random.shuffle(pairs)
-train_pairs = pairs[:40]
-val_pairs = pairs[40:50]
+train_count = int(len(pairs) * 0.8)
+train_pairs = pairs[:train_count]
+val_pairs = pairs[train_count:]
 
 
 def move_pairs(pair_list, image_dest, label_dest):
@@ -59,10 +65,10 @@ def move_pairs(pair_list, image_dest, label_dest):
 
 
 # Move the files (this does not delete them; they just change folders)
-train_count = move_pairs(train_pairs, train_images, train_labels)
-val_count = move_pairs(val_pairs, val_images, val_labels)
+train_moved = move_pairs(train_pairs, train_images, train_labels)
+val_moved = move_pairs(val_pairs, val_images, val_labels)
 
-print("Train image+label pairs:", train_count)
-print("Val image+label pairs:", val_count)
+print("Train image+label pairs:", train_moved)
+print("Val image+label pairs:", val_moved)
 print("Train folders:", train_images, "and", train_labels)
 print("Val folders:", val_images, "and", val_labels)
