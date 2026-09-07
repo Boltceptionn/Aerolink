@@ -243,32 +243,23 @@ def run_simulation(target_speed=5, tracking_mode="Ground Truth"):
     )
 
     # --------------------------------------------------------
-    # Camera tracking
+    # Proportional alignment controller
     # --------------------------------------------------------
+
+    pointing_error_x = predicted_x - camera_x
+    pointing_error_y = predicted_y - camera_y
+
+    kp = 0.5
 
     if tracking_mode == "YOLO":
 
-        camera_x += (
-            predicted_x -
-            camera_x
-        ) * 0.5
-
-        camera_y += (
-            predicted_y -
-            camera_y
-        ) * 0.5
+        camera_x += kp * pointing_error_x
+        camera_y += kp * pointing_error_y
 
     elif tracking_mode == "Ground Truth":
 
-        camera_x += (
-            predicted_x -
-            camera_x
-        ) * 0.5
-
-        camera_y += (
-            predicted_y -
-            camera_y
-        ) * 0.5
+        camera_x += kp * pointing_error_x
+        camera_y += kp * pointing_error_y
 
     # --------------------------------------------------------
     # Save camera state
