@@ -26,6 +26,7 @@ def run_simulation(target_speed=5, tracking_mode="Ground Truth"):
     hud_color = (80, 230, 170)
     text_color = (180, 195, 205)
     error_color = (230, 170, 70)
+    prediction_color = (180, 100, 255)
 
     # --------------------------------------------------------
     # Sensor grid
@@ -50,11 +51,17 @@ def run_simulation(target_speed=5, tracking_mode="Ground Truth"):
         )
 
     # --------------------------------------------------------
-    # Camera center
+    # Persistent camera state
     # --------------------------------------------------------
 
-    camera_x = width // 2
-    camera_y = height // 2
+    if "camera_x" not in st.session_state:
+        st.session_state.camera_x = width // 2
+
+    if "camera_y" not in st.session_state:
+        st.session_state.camera_y = height // 2
+
+    camera_x = st.session_state.camera_x
+    camera_y = st.session_state.camera_y
 
     # --------------------------------------------------------
     # Persistent target state
@@ -75,8 +82,18 @@ def run_simulation(target_speed=5, tracking_mode="Ground Truth"):
     target_x = st.session_state.target_x
     target_y = st.session_state.target_y
 
-    velocity_x = target_speed * 0.8
-    velocity_y = target_speed * 0.35
+    # Keep movement direction while allowing speed changes
+    velocity_x = (
+        abs(target_speed * 0.8)
+        if st.session_state.velocity_x >= 0
+        else -abs(target_speed * 0.8)
+    )
+
+    velocity_y = (
+        abs(target_speed * 0.35)
+        if st.session_state.velocity_y >= 0
+        else -abs(target_speed * 0.35)
+    )
 
     target_radius = 45
 
@@ -88,24 +105,30 @@ def run_simulation(target_speed=5, tracking_mode="Ground Truth"):
     target_y += velocity_y
 
     # --------------------------------------------------------
-    # Bounce from sensor boundaries
+    # Bounce from boundaries
     # --------------------------------------------------------
 
-    if target_x > width - target_radius or target_x < target_radius:
-        velocity_x *= -1
-        target_x = max(
-            target_radius,
-            min(width - target_radius, target_x)
-        )
+    if target_x > width - target_radius:
 
-    if target_y > height - target_radius or target_y < target_radius:
-        velocity_y *= -1
-        target_y = max(
-            target_radius,
-            min(height - target_radius, target_y)
-        )
+        target_x = width - target_radius
+        velocity_x = -abs(velocity_x)
 
-    # Save state for the next Streamlit rerun
+    elif target_x < target_radius:
+
+        target_x = target_radius
+        velocity_x = abs(velocity_x)
+
+    if target_y > height - target_radius:
+
+        target_y = height - target_radius
+        velocity_y = -abs(velocity_y)
+
+    elif target_y < target_radius:
+
+        target_y = target_radius
+        velocity_y = abs(velocity_y)
+
+    # Save target state
     st.session_state.target_x = target_x
     st.session_state.target_y = target_y
     st.session_state.velocity_x = velocity_x
@@ -122,6 +145,10 @@ def run_simulation(target_speed=5, tracking_mode="Ground Truth"):
         target_radius
     )
 
+    # --------------------------------------------------------
+    # Detection variables
+    # --------------------------------------------------------
+
     yolo_confidence = 0.0
     yolo_found = False
 
@@ -129,59 +156,126 @@ def run_simulation(target_speed=5, tracking_mode="Ground Truth"):
     detected_y = target_y
 
     # --------------------------------------------------------
-    # YOLO tracking
+    # YOLO detection
     # --------------------------------------------------------
 
     if tracking_mode == "YOLO":
 
         model = YOLO(MODEL_PATH)
 
-        for _ in range(10):
+        frame_rgb = pygame.surfarray.array3d(screen)
+        frame_rgb = frame_rgb.transpose(1, 0, 2)
 
-            frame_rgb = pygame.surfarray.array3d(screen)
-            frame_rgb = frame_rgb.transpose(1, 0, 2)
+        results = model(
+            frame_rgb,
+            conf=0.1,
+            verbose=False
+        )
 
-            results = model(
-                frame_rgb,
-                conf=0.1,
-                verbose=False
-            )
-
-            if len(results[0].boxes) == 0:
-                break
+        if len(results[0].boxes) > 0:
 
             best_index = results[0].boxes.conf.argmax()
             best_box = results[0].boxes[best_index]
 
-            x1, y1, x2, y2 = best_box.xyxy[0].tolist()
+            x1, y1, x2, y2 = (
+                best_box.xyxy[0].tolist()
+            )
 
-            yolo_confidence = float(best_box.conf[0])
+            yolo_confidence = float(
+                best_box.conf[0]
+            )
+
             yolo_found = True
 
             detected_x = (x1 + x2) / 2
             detected_y = (y1 + y2) / 2
 
-            camera_x += (
-                detected_x - camera_x
-            ) * 0.5
+    # --------------------------------------------------------
+    # Estimate target velocity
+    # --------------------------------------------------------
 
-            camera_y += (
-                detected_y - camera_y
-            ) * 0.5
+    if "previous_target_x" not in st.session_state:
+        st.session_state.previous_target_x = detected_x
+
+    if "previous_target_y" not in st.session_state:
+        st.session_state.previous_target_y = detected_y
+
+    estimated_velocity_x = (
+        detected_x -
+        st.session_state.previous_target_x
+    )
+
+    estimated_velocity_y = (
+        detected_y -
+        st.session_state.previous_target_y
+    )
+
+    st.session_state.previous_target_x = detected_x
+    st.session_state.previous_target_y = detected_y
 
     # --------------------------------------------------------
-    # Ground Truth tracking
+    # Predict future target position
     # --------------------------------------------------------
+
+    prediction_horizon = 8
+
+    predicted_x = (
+        detected_x +
+        estimated_velocity_x *
+        prediction_horizon
+    )
+
+    predicted_y = (
+        detected_y +
+        estimated_velocity_y *
+        prediction_horizon
+    )
+
+    # Keep prediction inside camera frame
+    predicted_x = max(
+        0,
+        min(width, predicted_x)
+    )
+
+    predicted_y = max(
+        0,
+        min(height, predicted_y)
+    )
+
+    # --------------------------------------------------------
+    # Camera tracking
+    # --------------------------------------------------------
+
+    if tracking_mode == "YOLO":
+
+        camera_x += (
+            predicted_x -
+            camera_x
+        ) * 0.5
+
+        camera_y += (
+            predicted_y -
+            camera_y
+        ) * 0.5
 
     elif tracking_mode == "Ground Truth":
 
         camera_x += (
-            target_x - camera_x
+            predicted_x -
+            camera_x
         ) * 0.5
 
         camera_y += (
-            target_y - camera_y
+            predicted_y -
+            camera_y
         ) * 0.5
+
+    # --------------------------------------------------------
+    # Save camera state
+    # --------------------------------------------------------
+
+    st.session_state.camera_x = camera_x
+    st.session_state.camera_y = camera_y
 
     # --------------------------------------------------------
     # Alignment error
@@ -203,6 +297,36 @@ def run_simulation(target_speed=5, tracking_mode="Ground Truth"):
 
     else:
         alignment_status = "SEARCHING"
+
+    # --------------------------------------------------------
+    # Draw prediction point
+    # --------------------------------------------------------
+
+    pygame.draw.circle(
+        screen,
+        prediction_color,
+        (
+            int(predicted_x),
+            int(predicted_y)
+        ),
+        7,
+        2
+    )
+
+    # Prediction vector
+    pygame.draw.line(
+        screen,
+        prediction_color,
+        (
+            int(detected_x),
+            int(detected_y)
+        ),
+        (
+            int(predicted_x),
+            int(predicted_y)
+        ),
+        2
+    )
 
     # --------------------------------------------------------
     # Target bounding box
@@ -396,6 +520,7 @@ def run_simulation(target_speed=5, tracking_mode="Ground Truth"):
     target_label = "TARGET"
 
     if yolo_found:
+
         target_label += (
             f"  CONF "
             f"{yolo_confidence:.2f}"
@@ -415,8 +540,25 @@ def run_simulation(target_speed=5, tracking_mode="Ground Truth"):
         )
     )
 
+    # Prediction label
+    prediction_label = "PREDICTED POSITION"
+
+    surface = small_font.render(
+        prediction_label,
+        True,
+        prediction_color
+    )
+
+    screen.blit(
+        surface,
+        (
+            int(predicted_x) + 10,
+            int(predicted_y) - 10
+        )
+    )
+
     # --------------------------------------------------------
-    # Bottom-left error telemetry
+    # Bottom-left telemetry
     # --------------------------------------------------------
 
     error_lines = [
@@ -440,6 +582,29 @@ def run_simulation(target_speed=5, tracking_mode="Ground Truth"):
                 height - 70 + i * 18
             )
         )
+
+    # --------------------------------------------------------
+    # Prediction telemetry
+    # --------------------------------------------------------
+
+    prediction_text = (
+        f"PREDICTION HORIZON: "
+        f"{prediction_horizon} FRAMES"
+    )
+
+    surface = small_font.render(
+        prediction_text,
+        True,
+        prediction_color
+    )
+
+    screen.blit(
+        surface,
+        (
+            380,
+            height - 43
+        )
+    )
 
     # --------------------------------------------------------
     # Optical status
