@@ -1,5 +1,6 @@
 import streamlit as st
 import pygame
+import time
 from simulator import run_simulation
 
 
@@ -179,6 +180,22 @@ with left:
 
 
 # ============================================================
+# SIMULATION CONTROL
+# ============================================================
+
+if "running" not in st.session_state:
+    st.session_state.running = False
+
+if start:
+    st.session_state.running = True
+
+if reset:
+    st.session_state.running = False
+    st.session_state.target_x = 400
+    st.session_state.target_y = 240
+
+
+# ============================================================
 # CAMERA
 # ============================================================
 
@@ -191,18 +208,43 @@ with center:
         unsafe_allow_html=True
     )
 
-    frame, error_x, error_y = run_simulation(
-        target_speed=target_speed,
-        tracking_mode=tracking_mode
-    )
+    if st.session_state.running:
 
-    frame = pygame.surfarray.array3d(frame)
-    frame = frame.transpose(1, 0, 2)
+        frame_placeholder = st.empty()
 
-    st.image(
-        frame,
-        use_container_width=True
-    )
+        for _ in range(100):
+
+            frame, error_x, error_y = run_simulation(
+                target_speed=target_speed,
+                tracking_mode=tracking_mode
+            )
+
+            frame = pygame.surfarray.array3d(frame)
+            frame = frame.transpose(1, 0, 2)
+
+            frame_placeholder.image(
+                frame,
+                caption="LIVE SIMULATION",
+                use_container_width=True
+            )
+
+            time.sleep(0.05)
+
+    else:
+
+        frame, error_x, error_y = run_simulation(
+            target_speed=target_speed,
+            tracking_mode=tracking_mode
+        )
+
+        frame = pygame.surfarray.array3d(frame)
+        frame = frame.transpose(1, 0, 2)
+
+        st.image(
+            frame,
+            caption="SIMULATION READY",
+            use_container_width=True
+        )
 
 
 # ============================================================
