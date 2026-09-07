@@ -10,172 +10,184 @@ st.set_page_config(
 )
 
 
-# ---------- Styling ----------
+# ============================================================
+# STYLING
+# ============================================================
 
 st.markdown("""
 <style>
-    .stApp {
-        background-color: #0b0f14;
-        color: #e6edf3;
-    }
 
-    .block-container {
-        padding-top: 1.5rem;
-        padding-bottom: 1rem;
-        max-width: 1500px;
-    }
+.stApp {
+    background: #080b0f;
+    color: #e6edf3;
+}
 
-    .topbar {
-        padding: 18px 22px;
-        border: 1px solid #26313d;
-        border-radius: 12px;
-        background: #111821;
-        margin-bottom: 18px;
-    }
+.block-container {
+    max-width: 1500px;
+    padding-top: 2rem;
+}
 
-    .brand {
-        font-size: 30px;
-        font-weight: 700;
-        letter-spacing: 3px;
-    }
+h1, h2, h3 {
+    color: #e6edf3;
+}
 
-    .subtitle {
-        color: #8b98a7;
-        font-size: 13px;
-        letter-spacing: 1px;
-    }
+.aero-title {
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: 6px;
+}
 
-    .status {
-        color: #35d07f;
-        font-weight: 600;
-        letter-spacing: 1px;
-    }
+.aero-subtitle {
+    color: #7f8c99;
+    font-size: 11px;
+    letter-spacing: 2px;
+}
 
-    .panel {
-        background: #111821;
-        border: 1px solid #26313d;
-        border-radius: 12px;
-        padding: 18px;
-        min-height: 100%;
-    }
+.aero-status {
+    color: #35d07f;
+    font-family: monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+}
 
-    .panel-title {
-        font-size: 14px;
-        font-weight: 700;
-        letter-spacing: 1.5px;
-        color: #9aa8b7;
-        margin-bottom: 14px;
-    }
+.section-title {
+    color: #7f8c99;
+    font-family: monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    margin-top: 12px;
+    margin-bottom: 12px;
+}
 
-    .telemetry-card {
-        background: #0c1219;
-        border: 1px solid #26313d;
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 10px;
-    }
+.telemetry {
+    background: #0e141b;
+    border: 1px solid #26313d;
+    padding: 12px;
+    margin-bottom: 8px;
+}
 
-    .telemetry-label {
-        color: #7f8c99;
-        font-size: 11px;
-        letter-spacing: 1px;
-    }
+.telemetry-label {
+    color: #687582;
+    font-family: monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+}
 
-    .telemetry-value {
-        font-size: 22px;
-        font-weight: 600;
-        margin-top: 3px;
-    }
+.telemetry-value {
+    color: #e6edf3;
+    font-family: monospace;
+    font-size: 19px;
+    font-weight: bold;
+    margin-top: 4px;
+}
 
-    .footer {
-        text-align: center;
-        color: #566270;
-        font-size: 11px;
-        margin-top: 18px;
-        letter-spacing: 1px;
-    }
+.footer {
+    text-align: center;
+    color: #46515c;
+    font-family: monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    margin-top: 25px;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
 
-# ---------- Header ----------
+# ============================================================
+# HEADER
+# ============================================================
 
-st.markdown("""
-<div class="topbar">
-    <div class="brand">AEROLINK</div>
+st.markdown(
+    '<div class="aero-title">AEROLINK</div>',
+    unsafe_allow_html=True
+)
 
-    <div class="subtitle">
-        VIRTUAL FSOC ALIGNMENT & TRACKING SYSTEM
-    </div>
+st.markdown(
+    '<div class="aero-subtitle">'
+    'VIRTUAL FREE-SPACE OPTICAL COMMUNICATION TERMINAL'
+    '</div>',
+    unsafe_allow_html=True
+)
 
-    <div style="margin-top:8px;" class="status">
-        ● SYSTEM ONLINE
-    </div>
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    '<div class="aero-status">● SYSTEM NOMINAL</div>',
+    unsafe_allow_html=True
+)
+
+st.divider()
 
 
-# ---------- Main Layout ----------
+# ============================================================
+# MAIN LAYOUT
+# ============================================================
 
-left, center, right = st.columns([1, 2.4, 1])
+left, center, right = st.columns(
+    [1, 2.5, 1]
+)
 
 
-# ---------- Mission Controls ----------
+# ============================================================
+# CONTROLS
+# ============================================================
 
 with left:
 
     st.markdown(
-        '<div class="panel-title">MISSION CONFIGURATION</div>',
+        '<div class="section-title">'
+        'MISSION / CONFIGURATION'
+        '</div>',
         unsafe_allow_html=True
     )
 
     target_speed = st.slider(
-        "Target Speed",
-        min_value=1,
-        max_value=10,
-        value=5
+        "TARGET SPEED",
+        1,
+        10,
+        5
     )
 
     camera_fov = st.slider(
-        "Camera FOV",
-        min_value=30,
-        max_value=120,
-        value=60
+        "CAMERA FOV",
+        30,
+        120,
+        60
     )
 
     tracking_mode = st.selectbox(
-        "Tracking Mode",
+        "TRACKING ALGORITHM",
         ["Ground Truth", "YOLO"]
     )
 
-    st.markdown("<br>", unsafe_allow_html=True)
-
     start = st.button(
-        "▶  START SIMULATION",
+        "▶ START SIMULATION",
         use_container_width=True
     )
 
     reset = st.button(
-        "↻  RESET",
+        "↻ RESET",
         use_container_width=True
     )
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown(
+        '<div class="telemetry">'
+        '<div class="telemetry-label">MISSION MODE</div>'
+        '<div class="telemetry-value">COARSE ALIGN</div>'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
-    st.markdown("""
-    <div class="telemetry-card">
-        <div class="telemetry-label">MISSION MODE</div>
-        <div class="telemetry-value">COARSE ALIGN</div>
-    </div>
-    """, unsafe_allow_html=True)
 
-
-# ---------- Camera View ----------
+# ============================================================
+# CAMERA
+# ============================================================
 
 with center:
 
     st.markdown(
-        '<div class="panel-title">VIRTUAL CAMERA FEED</div>',
+        '<div class="section-title">'
+        'SENSOR / VIRTUAL CAMERA FEED'
+        '</div>',
         unsafe_allow_html=True
     )
 
@@ -184,86 +196,148 @@ with center:
         tracking_mode=tracking_mode
     )
 
-    frame = frame.copy()
     frame = pygame.surfarray.array3d(frame)
     frame = frame.transpose(1, 0, 2)
 
     st.image(
         frame,
-        caption="LIVE SIMULATION",
         use_container_width=True
     )
 
 
-# ---------- Telemetry ----------
+# ============================================================
+# STATUS CALCULATION
+# ============================================================
+
+total_error = (
+    error_x ** 2 +
+    error_y ** 2
+) ** 0.5
+
+
+if total_error < 5:
+    tracking_status = "ALIGNED"
+
+elif total_error < 40:
+    tracking_status = "ACQUIRING"
+
+else:
+    tracking_status = "SEARCHING"
+
+
+# ============================================================
+# TELEMETRY
+# ============================================================
 
 with right:
 
     st.markdown(
-        '<div class="panel-title">LIVE TELEMETRY</div>',
+        '<div class="section-title">'
+        'TELEMETRY / LIVE'
+        '</div>',
         unsafe_allow_html=True
     )
 
-    st.markdown(f"""
-    <div class="telemetry-card">
-        <div class="telemetry-label">TRACKING MODE</div>
-        <div class="telemetry-value">{tracking_mode}</div>
-    </div>
+    st.markdown(
+        f'<div class="telemetry">'
+        f'<div class="telemetry-label">TRACKING MODE</div>'
+        f'<div class="telemetry-value">{tracking_mode}</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
-    <div class="telemetry-card">
-        <div class="telemetry-label">TARGET SPEED</div>
-        <div class="telemetry-value">{target_speed}</div>
-    </div>
+    st.markdown(
+        f'<div class="telemetry">'
+        f'<div class="telemetry-label">TARGET SPEED</div>'
+        f'<div class="telemetry-value">{target_speed} PX/FRAME</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
-    <div class="telemetry-card">
-        <div class="telemetry-label">CAMERA FOV</div>
-        <div class="telemetry-value">{camera_fov}°</div>
-    </div>
+    st.markdown(
+        f'<div class="telemetry">'
+        f'<div class="telemetry-label">CAMERA FOV</div>'
+        f'<div class="telemetry-value">{camera_fov}°</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
-    <div class="telemetry-card">
-        <div class="telemetry-label">HORIZONTAL ERROR</div>
-        <div class="telemetry-value">{abs(error_x):.1f} px</div>
-    </div>
+    st.markdown(
+        f'<div class="telemetry">'
+        f'<div class="telemetry-label">HORIZONTAL ERROR</div>'
+        f'<div class="telemetry-value">{error_x:+.1f} PX</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
-    <div class="telemetry-card">
-        <div class="telemetry-label">VERTICAL ERROR</div>
-        <div class="telemetry-value">{abs(error_y):.1f} px</div>
-    </div>
+    st.markdown(
+        f'<div class="telemetry">'
+        f'<div class="telemetry-label">VERTICAL ERROR</div>'
+        f'<div class="telemetry-value">{error_y:+.1f} PX</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
-    <div class="telemetry-card">
-        <div class="telemetry-label">TRACKING STATUS</div>
-        <div class="telemetry-value" style="color:#35d07f;">
-            {"ACTIVE" if start else "READY"}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="telemetry">'
+        f'<div class="telemetry-label">TRACKING STATUS</div>'
+        f'<div class="telemetry-value">{tracking_status}</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
 
-# ---------- Bottom Status ----------
+# ============================================================
+# ALIGNMENT MONITOR
+# ============================================================
 
 st.divider()
 
 st.markdown(
-    '<div class="panel-title">ALIGNMENT MONITOR</div>',
+    '<div class="section-title">'
+    'ALIGNMENT MONITOR'
+    '</div>',
     unsafe_allow_html=True
 )
 
 c1, c2, c3, c4 = st.columns(4)
 
+
 with c1:
-    st.metric("TARGET", "DETECTED")
+    st.metric(
+        "TARGET",
+        "DETECTED"
+    )
+
 
 with c2:
-    st.metric("PREDICTION", "READY")
+    st.metric(
+        "PREDICTION",
+        "READY"
+    )
+
 
 with c3:
-    st.metric("ALIGNMENT", "ACQUIRING")
+    st.metric(
+        "ALIGNMENT",
+        tracking_status
+    )
+
 
 with c4:
-    st.metric("SYSTEM", "READY")
+    st.metric(
+        "SYSTEM",
+        "NOMINAL"
+    )
 
+
+# ============================================================
+# FOOTER
+# ============================================================
 
 st.markdown(
-    '<div class="footer">AEROLINK • VIRTUAL FSOC LABORATORY • COARSE ALIGNMENT</div>',
+    '<div class="footer">'
+    'AEROLINK // VIRTUAL FSOC LABORATORY // COARSE ALIGNMENT'
+    '</div>',
     unsafe_allow_html=True
 )
