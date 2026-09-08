@@ -416,13 +416,14 @@ if selected_page == "🛰️ MISSION CONTROL":
     with col_ctrl:
         st.markdown('<div class="aero-section-title">COMMAND / CONTROLS</div>', unsafe_allow_html=True)
 
-        btn_run = st.button("▶ START / ENGAGE (100F)", use_container_width=True)
+        btn_run = st.button("▶ START / ENGAGE", use_container_width=True)
         btn_pause = st.button("⏸ PAUSE / RESUME", use_container_width=True)
         btn_reset = st.button("↻ RESET / CALIBRATE", use_container_width=True)
 
         if btn_run:
             st.session_state.running = True
             st.session_state.paused = False
+            st.session_state.sim_step = 0
             st.session_state.error_history = []
             st.session_state.error_history_x = []
             st.session_state.error_history_y = []
@@ -483,10 +484,7 @@ if selected_page == "🛰️ MISSION CONTROL":
 
             sim_start_time = time.time()
 
-            for frame_idx in range(100):
-
-                if st.session_state.paused:
-                    break
+            while st.session_state.running and not st.session_state.paused:
 
                 frame, err_x, err_y = run_simulation(
                     target_speed=st.session_state.param_speed,
@@ -518,12 +516,13 @@ if selected_page == "🛰️ MISSION CONTROL":
                 st.session_state.last_error_y = err_y
                 st.session_state.last_total_error = tot_err
                 st.session_state.last_status = current_status
+                st.session_state.sim_step += 1
 
                 # Render frame
                 frame_rgb = pygame.surfarray.array3d(frame).transpose(1, 0, 2)
                 feed_slot.image(
                     frame_rgb,
-                    caption=f"LIVE FEED // FRAME {frame_idx+1:03d}/100 // MODE: {st.session_state.param_mode.upper()} // FOV: {st.session_state.param_fov}°",
+                    caption=f"LIVE FEED // FRAME {st.session_state.sim_step:03d} // MODE: {st.session_state.param_mode.upper()} // FOV: {st.session_state.param_fov}°",
                     use_container_width=True
                 )
 
@@ -539,13 +538,6 @@ if selected_page == "🛰️ MISSION CONTROL":
                 )
 
                 time.sleep(0.025)
-
-            # End of run
-            if st.session_state.acquisition_time is None:
-                st.session_state.acquisition_status = "FAILED (UNLOCKED)"
-
-            st.session_state.running = False
-            st.rerun()
 
         else:
             # Standby / Static Render
